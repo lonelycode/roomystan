@@ -2,7 +2,9 @@ package tracker
 
 import (
 	"fmt"
-	"github.com/asecurityteam/rolling"
+	"github.com/konimarti/kalman"
+	"github.com/konimarti/lti"
+	"gonum.org/v1/gonum/mat"
 	"math"
 	"tinygo.org/x/bluetooth"
 )
@@ -21,16 +23,16 @@ type Tracker struct {
 }
 
 type WindowData struct {
-	Window    *rolling.PointPolicy
+	Window    []float64
 	SampleSet int
 }
 
-func New(ids []string) *Tracker {
+func New(ids []string, sample int) *Tracker {
 	return &Tracker{
 		DeviceIDs:      ids,
 		LocalTrackData: map[string]*WindowData{},
 		PowerValue:     BLE_LowPower,
-		Samples:        3,
+		Samples:        sample,
 	}
 }
 
@@ -44,28 +46,78 @@ func (t *Tracker) Update(adapter *bluetooth.Adapter, device bluetooth.ScanResult
 			_, ok := t.LocalTrackData[id]
 			if !ok {
 				t.LocalTrackData[id] = &WindowData{
-					Window: rolling.NewPointPolicy(rolling.NewWindow(t.Samples)),
+					Window: make([]float64, t.Samples),
 				}
 			}
 
 			// only work with a full sample set
-			t.LocalTrackData[id].Window.Append(rssi)
-			if t.LocalTrackData[id].SampleSet < t.Samples {
+			setNum := t.LocalTrackData[id].SampleSet
+			t.LocalTrackData[id].Window[setNum] = rssi
+			if setNum < t.Samples-1 {
 				t.LocalTrackData[id].SampleSet += 1
 			} else {
 				t.LocalTrackData[id].SampleSet = 0
 			}
 
-			fmt.Println(t.LocalTrackData[id].SampleSet)
-
-			// Debug only on 3 samples
-			if t.LocalTrackData[id].SampleSet == 3 {
-				currentAvg := t.LocalTrackData[id].Window.Reduce(rolling.Avg)
-				distNow := math.Pow(10, ((MeasuredPower - currentAvg) / (10.0 * t.PowerValue)))
-				fmt.Printf("Updated Distance for '%v (%s)' (RSSI %v / AVG %v) to %vm\n", id, name, rssi, currentAvg, distNow)
+			// Calc only on x samples
+			if len(t.LocalTrackData[id].Window) == t.Samples {
+				filtered := t.Filter(t.LocalTrackData[id].Window)
+				distNow := t.RSSIDist(filtered)
+				fmt.Printf("Updated Distance for '%v (%s)' (RSSI %v, Filter: %v) to %vm\n", id, name, rssi, filtered, distNow)
 			}
 
 			break
 		}
 	}
+}
+
+func (t *Tracker) RSSIDist(measurement float64) float64 {
+	return math.Pow(10, ((MeasuredPower - measurement) / (10.0 * t.PowerValue)))
+}
+
+func (t *Tracker) Filter(row []float64) float64 {
+	// define LTI system
+	lti := lti.Discrete{
+		Ad: mat.NewDense(1, 1, []float64{1}),
+		Bd: mat.NewDense(1, 1, nil),
+		C:  mat.NewDense(1, 1, []float64{1}),
+		D:  mat.NewDense(1, 1, nil),
+	}
+
+	// system noise / process model covariance matrix ("Systemrauschen")
+	Gd := mat.NewDense(1, 1, []float64{1})
+
+	ctx := kalman.Context{
+		// initial state
+		X: mat.NewVecDense(1, []float64{row[0]}),
+		// initial covariance matrix
+		P: mat.NewDense(1, 1, []float64{0}),
+	}
+
+	// create ROSE filter
+	gammaR := 9.0
+	alphaR := 0.5
+	alphaM := 0.3
+	filter := kalman.NewRoseFilter(lti, Gd, gammaR, alphaR, alphaM)
+
+	// no control
+	u := mat.NewVecDense(1, nil)
+
+	tot := 0.0
+	for _, c := range row {
+		// new measurement
+		y := mat.NewVecDense(1, []float64{c})
+
+		// apply filter
+		filter.Apply(&ctx, y, u)
+
+		// get corrected state vector
+		state := filter.State()
+
+		// print out input and output signals
+		fmt.Printf("%3.8f,%3.8f\n", y.AtVec(0), state.AtVec(0))
+		tot += state.AtVec(0)
+	}
+
+	return tot / float64(t.Samples)
 }

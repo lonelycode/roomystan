@@ -7,6 +7,6 @@ import (
 
 func main() {
 	b := scanner.New()
-	t := tracker.New([]string{"Pam", "room-assistant companion"})
+	t := tracker.New([]string{"Pam", "room-assistant companion"}, 3)
 	b.Scan(t.Update)
 }
