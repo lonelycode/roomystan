@@ -6,34 +6,44 @@ import (
 	"github.com/konimarti/lti"
 	"gonum.org/v1/gonum/mat"
 	"math"
+	"time"
 	"tinygo.org/x/bluetooth"
 )
 
 const (
-	MeasuredPower = -65.0
+	MeasuredPower = -75.0
 	BLE_LowPower  = 2.0
 	BLE_HighPower = 4.0
 )
 
 type Tracker struct {
+	ID             string
 	DeviceIDs      []string
 	LocalTrackData map[string]*WindowData
 	PowerValue     float64
 	Samples        int
+	OnUpdate       func(trackerID string, deviceID string, distance float64)
 }
 
 type WindowData struct {
-	Window    []float64
-	SampleSet int
+	Window      []float64
+	SampleSet   int
+	CurrentDist float64
+	LastUpdated time.Time
 }
 
-func New(ids []string, sample int) *Tracker {
+func New(id string, ids []string, sample int) *Tracker {
 	return &Tracker{
+		ID:             id,
 		DeviceIDs:      ids,
 		LocalTrackData: map[string]*WindowData{},
 		PowerValue:     BLE_LowPower,
 		Samples:        sample,
 	}
+}
+
+func PrintUpdate(trackerID string, deviceID string, distance float64) {
+	fmt.Printf("Updated Distance for '%s/%s' to %vm\n", trackerID, deviceID, distance)
 }
 
 func (t *Tracker) Update(adapter *bluetooth.Adapter, device bluetooth.ScanResult) {
@@ -60,10 +70,16 @@ func (t *Tracker) Update(adapter *bluetooth.Adapter, device bluetooth.ScanResult
 			}
 
 			// Calc only on x samples
-			if len(t.LocalTrackData[id].Window) == t.Samples {
+			if t.LocalTrackData[id].SampleSet+1 == t.Samples {
 				filtered := t.Filter(t.LocalTrackData[id].Window)
 				distNow := t.RSSIDist(filtered)
+
+				t.LocalTrackData[id].CurrentDist = distNow
+				t.LocalTrackData[id].LastUpdated = time.Now()
 				fmt.Printf("Updated Distance for '%v (%s)' (RSSI %v, Filter: %v) to %vm\n", id, name, rssi, filtered, distNow)
+				if t.OnUpdate != nil {
+					t.OnUpdate(t.ID, v, distNow)
+				}
 			}
 
 			break
@@ -115,7 +131,7 @@ func (t *Tracker) Filter(row []float64) float64 {
 		state := filter.State()
 
 		// print out input and output signals
-		fmt.Printf("%3.8f,%3.8f\n", y.AtVec(0), state.AtVec(0))
+		//fmt.Printf("%3.8f,%3.8f\n", y.AtVec(0), state.AtVec(0))
 		tot += state.AtVec(0)
 	}
 

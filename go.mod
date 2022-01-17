@@ -3,6 +3,7 @@ module github.com/lonelycode/roomystan
 go 1.17
 
 require (
+	github.com/ReneKroon/ttlcache/v2 v2.11.0
 	github.com/konimarti/kalman v0.0.3
 	github.com/konimarti/lti v0.0.1
 	gonum.org/v1/gonum v0.9.3
@@ -17,5 +18,6 @@ require (
 	github.com/konsorten/go-windows-terminal-sequences v1.0.3 // indirect
 	github.com/muka/go-bluetooth v0.0.0-20210812063148-b6c83362e27d // indirect
 	github.com/sirupsen/logrus v1.6.0 // indirect
+	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
 	golang.org/x/sys v0.0.0-20210304124612-50617c2ba197 // indirect
 )
