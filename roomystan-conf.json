@@ -1,0 +1,5 @@
+{
+  "Devices": ["room-assistant companion"],
+  "SampleSize": 3,
+  "DeviceTTL": 30
+}

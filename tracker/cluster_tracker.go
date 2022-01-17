@@ -2,6 +2,7 @@ package tracker
 
 import (
 	ttlcache "github.com/ReneKroon/ttlcache/v2"
+	"github.com/lonelycode/roomystan/config"
 	"sort"
 	"time"
 )
@@ -26,7 +27,7 @@ func NewCluster() *Cluster {
 		Members: ttlcache.NewCache(),
 	}
 
-	c.Members.SetTTL(time.Duration(5) * time.Minute)
+	c.Members.SetTTL(time.Duration(config.Get().DeviceTTL) * time.Minute)
 	c.Members.SkipTTLExtensionOnHit(true)
 
 	return c

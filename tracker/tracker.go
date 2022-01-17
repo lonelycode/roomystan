@@ -16,6 +16,8 @@ const (
 	BLE_HighPower = 4.0
 )
 
+type CallBackFunc func(trackerID string, deviceID string, distance float64)
+
 type Tracker struct {
 	ID             string
 	DeviceIDs      []string
