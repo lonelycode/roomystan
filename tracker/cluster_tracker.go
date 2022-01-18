@@ -1,6 +1,7 @@
 package tracker
 
 import (
+	"fmt"
 	ttlcache "github.com/ReneKroon/ttlcache/v2"
 	"github.com/lonelycode/roomystan/config"
 	"sort"
@@ -45,6 +46,7 @@ func (c *Cluster) UpdateMember(memberID, deviceID string, distance float64) {
 
 	mem.AddOrUpdateDevice(deviceID, distance)
 	c.Members.Set(memberID, mem)
+	fmt.Printf("updated %s in %s with %v\n", memberID, deviceID, distance)
 }
 
 type DeviceStatus struct {

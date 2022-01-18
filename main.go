@@ -26,7 +26,6 @@ func start(devices []string) {
 	t := tracker.New(config.Get().Name, devices, 3)
 	t.OnUpdate = func(cluster *tracker.Cluster) tracker.CallBackFunc {
 		return func(trackerID string, deviceID string, distance float64) {
-			cluster.UpdateMember(trackerID, deviceID, distance)
 			data, err := json.Marshal(&mosquito.Payload{
 				Device:   deviceID,
 				Distance: distance,
@@ -41,6 +40,7 @@ func start(devices []string) {
 		}
 	}(c)
 
+	// for debuging scanning
 	go func(cluster *tracker.Cluster) {
 		for {
 			time.Sleep(10 * time.Second)
@@ -53,6 +53,7 @@ func start(devices []string) {
 
 func OnRecieveClusterUpdateFunc(cluster *tracker.Cluster) func(client mqtt.Client, msg mqtt.Message) {
 	return func(client mqtt.Client, msg mqtt.Message) {
+		fmt.Println("got message")
 		pl := mosquito.Payload{}
 		err := json.Unmarshal(msg.Payload(), &pl)
 		if err != nil {

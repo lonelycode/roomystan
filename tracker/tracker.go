@@ -78,7 +78,7 @@ func (t *Tracker) Update(adapter *bluetooth.Adapter, device bluetooth.ScanResult
 
 				t.LocalTrackData[id].CurrentDist = distNow
 				t.LocalTrackData[id].LastUpdated = time.Now()
-				fmt.Printf("Updated Distance for '%v (%s)' (RSSI %v, Filter: %v) to %vm\n", id, name, rssi, filtered, distNow)
+				//fmt.Printf("Updated Distance for '%v (%s)' (RSSI %v, Filter: %v) to %vm\n", id, name, rssi, filtered, distNow)
 				if t.OnUpdate != nil {
 					t.OnUpdate(t.ID, v, distNow)
 				}

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/lonelycode/roomystan/config"
+	uuid "github.com/satori/go.uuid"
 )
 
 const (
@@ -29,13 +30,14 @@ func New(cfg *config.MQTTConf) *MQTTHandler {
 func (m *MQTTHandler) Connect() error {
 	opts := mqtt.NewClientOptions()
 	opts.AddBroker(fmt.Sprintf("tcp://%s:%d", m.cfg.Address, m.cfg.Port))
-	opts.SetClientID("roomystan_mqtt_client")
+	opts.SetClientID(fmt.Sprintf("roomystan-mqtt-%s", uuid.NewV4().String())) // need unique IDs for each client
 	opts.SetUsername(m.cfg.User)
 	opts.SetPassword(m.cfg.Pass)
 
 	c := mqtt.NewClient(opts)
 
-	if token := c.Connect(); token.Wait() && token.Error() != nil {
+	token := c.Connect()
+	if token.Wait() && token.Error() != nil {
 		return token.Error()
 	}
 

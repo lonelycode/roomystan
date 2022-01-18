@@ -1,5 +1,10 @@
 {
-  "Devices": ["room-assistant companion"],
-  "SampleSize": 3,
-  "DeviceTTL": 30
+  "Name": "office",
+  "Devices": ["room-assistant companion", "Pam"],
+  "SampleSize": 1,
+  "DeviceTTL": 30,
+  "MQTT": {
+    "Address": "10.13.36.16",
+    "Port": 1883
+  }
 }

@@ -4,15 +4,16 @@ go 1.17
 
 require (
 	github.com/ReneKroon/ttlcache/v2 v2.11.0
+	github.com/eclipse/paho.mqtt.golang v1.3.5
 	github.com/konimarti/kalman v0.0.3
 	github.com/konimarti/lti v0.0.1
+	github.com/satori/go.uuid v1.2.0
 	gonum.org/v1/gonum v0.9.3
 	tinygo.org/x/bluetooth v0.4.0
 )
 
 require (
 	github.com/JuulLabs-OSS/cbgo v0.0.2 // indirect
-	github.com/eclipse/paho.mqtt.golang v1.3.5 // indirect
 	github.com/fatih/structs v1.1.0 // indirect
 	github.com/go-ole/go-ole v1.2.4 // indirect
 	github.com/godbus/dbus/v5 v5.0.3 // indirect
