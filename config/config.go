@@ -26,6 +26,12 @@ type AppConf struct {
 	MQTT       *MQTTConf
 	Name       string
 	Cluster    *ClusterConf
+	Hass       *HassConfig
+}
+
+type HassConfig struct {
+	Enable          bool
+	DiscoveryPrefix string
 }
 
 var globalConf *AppConf
@@ -82,6 +88,12 @@ func sensibleDefaults(cfg *AppConf) {
 		cfg.Cluster = &ClusterConf{
 			Members:  []string{},
 			ListenOn: fmt.Sprintf("%s:8899", util.GetOutboundIP().String()),
+		}
+	}
+
+	if cfg.Hass == nil {
+		cfg.Hass = &HassConfig{
+			DiscoveryPrefix: "homeassistant",
 		}
 	}
 }

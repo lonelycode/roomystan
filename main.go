@@ -5,6 +5,7 @@ import (
 	"fmt"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/lonelycode/roomystan/config"
+	"github.com/lonelycode/roomystan/hass"
 	"github.com/lonelycode/roomystan/leader"
 	"github.com/lonelycode/roomystan/mosquito"
 	"github.com/lonelycode/roomystan/scanner"
@@ -16,6 +17,7 @@ func start(devices []string) {
 	b := scanner.New()
 	c := tracker.NewCluster()
 
+	fmt.Println("setting up MQTT connection")
 	mq := mosquito.New(config.Get().MQTT)
 	err := mq.Connect()
 	if err != nil {
@@ -23,6 +25,13 @@ func start(devices []string) {
 	}
 	mq.PayloadHandler = OnRecieveClusterUpdateFunc(c)
 	mq.ListenForClusterUpdates()
+	mq.StartHeartbeat()
+	mq.ListenForHeartbeats()
+
+	if config.Get().Hass.Enable {
+		fmt.Println("sending home assistant autoconfig")
+		hass.SetupDevices(mq)
+	}
 
 	stopChan := make(chan struct{})
 	l := leader.Leader{
@@ -56,50 +65,12 @@ func start(devices []string) {
 				panic(err)
 			}
 
+			fmt.Println("sending cluster update")
 			mq.SendClusterUpdate(data)
 		}
 	}(c)
 
 	b.Scan(t.Update)
-}
-
-type HassSensorPayload struct {
-	Devices map[string]*DeviceInfo
-}
-
-type DeviceInfo struct {
-	Name     string
-	Location string
-}
-
-func hassPayloadFromCluster(dat map[string]string) *HassSensorPayload {
-	pl := &HassSensorPayload{Devices: make(map[string]*DeviceInfo, 0)}
-	for k, v := range dat {
-		di := &DeviceInfo{
-			Name:     k,
-			Location: v,
-		}
-		pl.Devices[k] = di
-	}
-
-	notHome := []string{}
-	for _, devName := range config.Get().Devices {
-		_, ok := pl.Devices[devName]
-		if !ok {
-			// device is not home
-			notHome = append(notHome, devName)
-		}
-	}
-
-	for _, d := range notHome {
-		di := &DeviceInfo{
-			Name:     d,
-			Location: "not_home",
-		}
-		pl.Devices[d] = di
-	}
-
-	return pl
 }
 
 func broadcastDeviceLocations(stop chan struct{}, cluster *tracker.Cluster, m *mosquito.MQTTHandler) {
@@ -112,12 +83,16 @@ func broadcastDeviceLocations(stop chan struct{}, cluster *tracker.Cluster, m *m
 			return
 		case <-ticker.C:
 			//fmt.Println(cluster.EstimateDeviceLocations())
-			b, err := json.Marshal(hassPayloadFromCluster(cluster.EstimateDeviceLocations()))
+			pl := hass.PayloadFromCluster(cluster.EstimateDeviceLocations())
+			b, err := json.Marshal(pl)
 			if err != nil {
 				panic(err)
 			}
 
 			m.BroadcastDeviceLocations(b)
+			if config.Get().Hass.Enable {
+				hass.PublishDeviceStatus(m, pl)
+			}
 		}
 	}
 
@@ -125,12 +100,14 @@ func broadcastDeviceLocations(stop chan struct{}, cluster *tracker.Cluster, m *m
 
 func OnRecieveClusterUpdateFunc(cluster *tracker.Cluster) func(client mqtt.Client, msg mqtt.Message) {
 	return func(client mqtt.Client, msg mqtt.Message) {
+		fmt.Println("What?")
 		pl := mosquito.Payload{}
 		err := json.Unmarshal(msg.Payload(), &pl)
 		if err != nil {
 			panic(err)
 		}
 
+		fmt.Println(string(msg.Payload()))
 		cluster.UpdateMember(pl.Member, pl.Device, pl.Distance)
 	}
 }

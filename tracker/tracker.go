@@ -53,6 +53,8 @@ func (t *Tracker) Update(adapter *bluetooth.Adapter, device bluetooth.ScanResult
 	rssi := float64(device.RSSI)
 	name := device.LocalName()
 
+	fmt.Printf("found device %s (%s) with RSSI %v\n", id, name, rssi)
+
 	for _, v := range t.DeviceIDs {
 		if v == id || v == name {
 			_, ok := t.LocalTrackData[id]
@@ -78,7 +80,7 @@ func (t *Tracker) Update(adapter *bluetooth.Adapter, device bluetooth.ScanResult
 
 				t.LocalTrackData[id].CurrentDist = distNow
 				t.LocalTrackData[id].LastUpdated = time.Now()
-				//fmt.Printf("Updated Distance for '%v (%s)' (RSSI %v, Filter: %v) to %vm\n", id, name, rssi, filtered, distNow)
+				fmt.Printf("updated tracked device '%v (%s)' (RSSI %v, Filter: %v) to %vm\n", id, name, rssi, filtered, distNow)
 				if t.OnUpdate != nil {
 					t.OnUpdate(t.ID, v, distNow)
 				}

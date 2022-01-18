@@ -52,22 +52,21 @@ func (m *MQTTHandler) Connect() error {
 	return nil
 }
 
-func (m *MQTTHandler) messageHandler(client mqtt.Client, msg mqtt.Message) {
+func (m *MQTTHandler) PrintMessageHandler(client mqtt.Client, msg mqtt.Message) {
 	fmt.Printf("Received message: %s from topic: %s\n", msg.Payload(), msg.Topic())
 }
 
 func (m *MQTTHandler) ListenForClusterUpdates() {
-	if m.PayloadHandler == nil {
-		m.PayloadHandler = m.messageHandler
-	}
-
+	fmt.Println("subscribing to ", statusTopic)
 	token := m.client.Subscribe(statusTopic, 1, m.PayloadHandler)
 	token.Wait()
 }
 
 func (m *MQTTHandler) ListenForHeartbeats() {
+	fmt.Println("setting up heartbeat listener")
 	token := m.client.Subscribe(heartBeatTopic, 1, m.HeartBeatHandler)
 	token.Wait()
+	fmt.Println("setup heartbeat listener")
 }
 
 func (m *MQTTHandler) HeartBeatHandler(client mqtt.Client, msg mqtt.Message) {
@@ -77,6 +76,8 @@ func (m *MQTTHandler) HeartBeatHandler(client mqtt.Client, msg mqtt.Message) {
 		panic(err)
 	}
 
+	fmt.Println("received heartbeat")
+
 	if hb.IP == m.me.IP {
 		return
 	}
@@ -85,10 +86,20 @@ func (m *MQTTHandler) HeartBeatHandler(client mqtt.Client, msg mqtt.Message) {
 func (m *MQTTHandler) SendClusterUpdate(data []byte) {
 	token := m.client.Publish(statusTopic, 0, false, data)
 	token.Wait()
+	fmt.Println("sent update to ", statusTopic, token.Error())
 }
 
 func (m *MQTTHandler) BroadcastDeviceLocations(data []byte) {
 	token := m.client.Publish(leaderTopic, 0, false, data)
+	token.Wait()
+}
+
+func (m *MQTTHandler) PublishTo(topic string, payload interface{}) {
+	data, err := json.Marshal(payload)
+	if err != nil {
+		panic(err)
+	}
+	token := m.client.Publish(topic, 0, false, data)
 	token.Wait()
 }
 
@@ -98,6 +109,7 @@ type HeartBeat struct {
 }
 
 func (m *MQTTHandler) StartHeartbeat() {
+	fmt.Println("starting heartbeat publisher")
 	hb := &HeartBeat{
 		Name: config.Get().Name,
 		IP:   util.GetOutboundIP().String(),
