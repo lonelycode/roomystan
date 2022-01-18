@@ -111,6 +111,7 @@ func NewMember(name string, ttl int) *Member {
 
 	m.Devices.SetTTL(time.Duration(ttl) * time.Second)
 	m.Devices.SkipTTLExtensionOnHit(true)
+
 	return m
 }
 

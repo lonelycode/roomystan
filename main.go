@@ -64,7 +64,7 @@ func start(devices []string) {
 }
 
 type HassSensorPayload struct {
-	Devices []*DeviceInfo
+	Devices map[string]*DeviceInfo
 }
 
 type DeviceInfo struct {
@@ -73,13 +73,30 @@ type DeviceInfo struct {
 }
 
 func hassPayloadFromCluster(dat map[string]string) *HassSensorPayload {
-	pl := &HassSensorPayload{Devices: make([]*DeviceInfo, 0)}
+	pl := &HassSensorPayload{Devices: make(map[string]*DeviceInfo, 0)}
 	for k, v := range dat {
 		di := &DeviceInfo{
 			Name:     k,
 			Location: v,
 		}
-		pl.Devices = append(pl.Devices, di)
+		pl.Devices[k] = di
+	}
+
+	notHome := []string{}
+	for _, devName := range config.Get().Devices {
+		_, ok := pl.Devices[devName]
+		if !ok {
+			// device is not home
+			notHome = append(notHome, devName)
+		}
+	}
+
+	for _, d := range notHome {
+		di := &DeviceInfo{
+			Name:     d,
+			Location: "not_home",
+		}
+		pl.Devices[d] = di
 	}
 
 	return pl
