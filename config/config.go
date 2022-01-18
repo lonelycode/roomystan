@@ -2,6 +2,8 @@ package config
 
 import (
 	"encoding/json"
+	"fmt"
+	"github.com/lonelycode/roomystan/util"
 	"os"
 )
 
@@ -12,12 +14,18 @@ type MQTTConf struct {
 	Pass    string
 }
 
+type ClusterConf struct {
+	Members  []string
+	ListenOn string
+}
+
 type AppConf struct {
 	Devices    []string
 	SampleSize int
 	DeviceTTL  int
 	MQTT       *MQTTConf
 	Name       string
+	Cluster    *ClusterConf
 }
 
 var globalConf *AppConf
@@ -67,6 +75,13 @@ func sensibleDefaults(cfg *AppConf) {
 			Port:    1883,
 			User:    "",
 			Pass:    "",
+		}
+	}
+
+	if cfg.Cluster == nil {
+		cfg.Cluster = &ClusterConf{
+			Members:  []string{},
+			ListenOn: fmt.Sprintf("%s:8899", util.GetOutboundIP().String()),
 		}
 	}
 }

@@ -8,6 +8,7 @@ require (
 	github.com/konimarti/kalman v0.0.3
 	github.com/konimarti/lti v0.0.1
 	github.com/satori/go.uuid v1.2.0
+	github.com/upsight/dinghy v0.0.0-20180109211126-e318c523c2fb
 	gonum.org/v1/gonum v0.9.3
 	tinygo.org/x/bluetooth v0.4.0
 )
