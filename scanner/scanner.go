@@ -32,6 +32,6 @@ func (b *BLE) Scan(cb CallBack) {
 	}
 }
 
-func PrintCallBack(adapter *bluetooth.Adapter, device bluetooth.ScanResult) {
-	println("found device:", device.Address.String(), device.RSSI, device.LocalName())
+func PrintCallBack(adapter *bluetooth.Adapter, result bluetooth.ScanResult) {
+	println("found device:", result.Address.String(), result.RSSI, result.LocalName())
 }

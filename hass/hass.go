@@ -2,6 +2,7 @@ package hass
 
 import (
 	"fmt"
+	"github.com/gosimple/slug"
 	"github.com/lonelycode/roomystan/config"
 	"github.com/lonelycode/roomystan/mosquito"
 	"strings"
@@ -55,7 +56,7 @@ func PayloadFromCluster(dat map[string]string) *SensorPayload {
 }
 
 func SensorName(tracker string) string {
-	return fmt.Sprintf("%s_rstn_tracker", strings.ToLower(tracker))
+	return fmt.Sprintf("%s_rstn_tracker", slug.Make(strings.ToLower(tracker)))
 }
 
 func BuildConfigTopic(tracker string) string {

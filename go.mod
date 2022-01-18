@@ -5,6 +5,7 @@ go 1.17
 require (
 	github.com/ReneKroon/ttlcache/v2 v2.11.0
 	github.com/eclipse/paho.mqtt.golang v1.3.5
+	github.com/gosimple/slug v1.12.0
 	github.com/konimarti/kalman v0.0.3
 	github.com/konimarti/lti v0.0.1
 	github.com/satori/go.uuid v1.2.0
@@ -19,6 +20,7 @@ require (
 	github.com/go-ole/go-ole v1.2.4 // indirect
 	github.com/godbus/dbus/v5 v5.0.3 // indirect
 	github.com/gorilla/websocket v1.4.2 // indirect
+	github.com/gosimple/unidecode v1.0.1 // indirect
 	github.com/konsorten/go-windows-terminal-sequences v1.0.3 // indirect
 	github.com/muka/go-bluetooth v0.0.0-20210812063148-b6c83362e27d // indirect
 	github.com/sirupsen/logrus v1.6.0 // indirect
