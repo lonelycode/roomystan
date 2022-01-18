@@ -27,7 +27,7 @@ func start(devices []string) {
 	stopChan := make(chan struct{})
 	l := leader.Leader{
 		OnLeader: func() error {
-			go broadcastDeviceLocations(stopChan, c)
+			go broadcastDeviceLocations(stopChan, c, mq)
 			return nil
 		},
 		OnFollower: func() error {
@@ -60,19 +60,32 @@ func start(devices []string) {
 		}
 	}(c)
 
-	// for debuging scanning
-	//go func(cluster *tracker.Cluster) {
-	//	for {
-	//		time.Sleep(10 * time.Second)
-	//		fmt.Println(cluster.EstimateDeviceLocations())
-	//	}
-	//}(c)
-
-	fmt.Println("=========== SCANNING ===========")
 	b.Scan(t.Update)
 }
 
-func broadcastDeviceLocations(stop chan struct{}, cluster *tracker.Cluster) {
+type HassSensorPayload struct {
+	Devices []*DeviceInfo
+}
+
+type DeviceInfo struct {
+	Name     string
+	Location string
+}
+
+func hassPayloadFromCluster(dat map[string]string) *HassSensorPayload {
+	pl := &HassSensorPayload{Devices: make([]*DeviceInfo, 0)}
+	for k, v := range dat {
+		di := &DeviceInfo{
+			Name:     k,
+			Location: v,
+		}
+		pl.Devices = append(pl.Devices, di)
+	}
+
+	return pl
+}
+
+func broadcastDeviceLocations(stop chan struct{}, cluster *tracker.Cluster, m *mosquito.MQTTHandler) {
 	ticker := time.NewTicker(5 * time.Second)
 	fmt.Println("starting leader broadcast")
 	for {
@@ -81,7 +94,13 @@ func broadcastDeviceLocations(stop chan struct{}, cluster *tracker.Cluster) {
 			fmt.Println("stopping leader broadcast")
 			return
 		case <-ticker.C:
-			fmt.Println(cluster.EstimateDeviceLocations())
+			//fmt.Println(cluster.EstimateDeviceLocations())
+			b, err := json.Marshal(hassPayloadFromCluster(cluster.EstimateDeviceLocations()))
+			if err != nil {
+				panic(err)
+			}
+
+			m.BroadcastDeviceLocations(b)
 		}
 	}
 

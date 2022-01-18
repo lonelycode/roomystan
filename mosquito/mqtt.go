@@ -13,6 +13,7 @@ import (
 const (
 	statusTopic    string = "roomystan/deviceStatus"
 	heartBeatTopic string = "roomystan/heartbeat"
+	leaderTopic    string = "roomystan/leader"
 )
 
 type MQTTHandler struct {
@@ -83,6 +84,11 @@ func (m *MQTTHandler) HeartBeatHandler(client mqtt.Client, msg mqtt.Message) {
 
 func (m *MQTTHandler) SendClusterUpdate(data []byte) {
 	token := m.client.Publish(statusTopic, 0, false, data)
+	token.Wait()
+}
+
+func (m *MQTTHandler) BroadcastDeviceLocations(data []byte) {
+	token := m.client.Publish(leaderTopic, 0, false, data)
 	token.Wait()
 }
 

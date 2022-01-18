@@ -25,7 +25,7 @@ func (b *BLE) Scan(cb CallBack) {
 	}
 
 	// Start scanning.
-	println("Scanning...")
+	println("Scanning for BLE devices...")
 	err = b.adapter.Scan(cb)
 	if err != nil {
 		log.Fatal("scanning failed", err)
