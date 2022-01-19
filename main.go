@@ -70,7 +70,8 @@ func start(devices []string) {
 		}
 	}(c)
 
-	b.Scan(t.Update)
+	//b.Scan(t.Update)
+	b.Scan()
 }
 
 func broadcastDeviceLocations(stop chan struct{}, cluster *tracker.Cluster, m *mosquito.MQTTHandler) {
