@@ -28,14 +28,14 @@ func NewCluster() *Cluster {
 		Members: ttlcache.NewCache(),
 	}
 
-	c.Members.SetTTL(time.Duration(config.Get().DeviceTTL) * time.Minute)
+	c.Members.SetTTL(time.Duration(15 * time.Minute))
 	c.Members.SkipTTLExtensionOnHit(true)
 
 	return c
 }
 
 func (c *Cluster) UpdateMember(memberID, deviceID string, distance float64) {
-	var mem = NewMember(memberID, 30)
+	var mem = NewMember(memberID, config.Get().DeviceTTL)
 	var ok bool
 	if val, err := c.Members.Get(memberID); err != ttlcache.ErrNotFound {
 		mem, ok = val.(*Member)

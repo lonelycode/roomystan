@@ -53,7 +53,7 @@ func (t *Tracker) Update(adapter *bluetooth.Adapter, device bluetooth.ScanResult
 	rssi := float64(device.RSSI)
 	name := device.LocalName()
 
-	//fmt.Printf("found device %s (%s) with RSSI %v\n", id, name, rssi)
+	fmt.Printf("found device %s (%s)\n", id, name)
 
 	for _, v := range t.DeviceIDs {
 		if v == id || v == name {
