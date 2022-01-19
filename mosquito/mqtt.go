@@ -86,7 +86,6 @@ func (m *MQTTHandler) HeartBeatHandler(client mqtt.Client, msg mqtt.Message) {
 func (m *MQTTHandler) SendClusterUpdate(data []byte) {
 	token := m.client.Publish(statusTopic, 0, false, data)
 	token.Wait()
-	fmt.Println("sent update to ", statusTopic, token.Error())
 }
 
 func (m *MQTTHandler) BroadcastDeviceLocations(data []byte) {

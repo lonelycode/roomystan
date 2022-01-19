@@ -25,8 +25,8 @@ func start(devices []string) {
 	}
 	mq.PayloadHandler = OnRecieveClusterUpdateFunc(c)
 	mq.ListenForClusterUpdates()
-	mq.StartHeartbeat()
-	mq.ListenForHeartbeats()
+	//mq.StartHeartbeat()
+	//mq.ListenForHeartbeats()
 
 	if config.Get().Hass.Enable {
 		fmt.Println("sending home assistant autoconfig")
@@ -65,7 +65,7 @@ func start(devices []string) {
 				panic(err)
 			}
 
-			fmt.Println("sending cluster update")
+			//fmt.Println("sending cluster update")
 			mq.SendClusterUpdate(data)
 		}
 	}(c)
@@ -100,14 +100,12 @@ func broadcastDeviceLocations(stop chan struct{}, cluster *tracker.Cluster, m *m
 
 func OnRecieveClusterUpdateFunc(cluster *tracker.Cluster) func(client mqtt.Client, msg mqtt.Message) {
 	return func(client mqtt.Client, msg mqtt.Message) {
-		fmt.Println("What?")
 		pl := mosquito.Payload{}
 		err := json.Unmarshal(msg.Payload(), &pl)
 		if err != nil {
 			panic(err)
 		}
 
-		fmt.Println(string(msg.Payload()))
 		cluster.UpdateMember(pl.Member, pl.Device, pl.Distance)
 	}
 }
